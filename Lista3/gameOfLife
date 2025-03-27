@@ -81,8 +81,8 @@ def main():
     playing = True
     playSim = False
     cnt = 0
-    update_freq = 120
-    p0 = 0.95
+    update_freq = 120 # update the simulation after reaching some value
+    p0 = 0.5
     densities = []
     positions = gen(p0)
 
@@ -90,15 +90,21 @@ def main():
     while(playing):
         clock.tick(fps)
 
+        # for testing purposes, update slower
+        # if playSim:
+        #     cnt += 1
+        
+        # if cnt >= update_freq:
+        #     cnt = 0
+        #     density = len(positions) / (grid_width * grid_height)
+        #     densities.append(density)
+        #     positions = adjust_grid(positions)
+
         if playSim:
             cnt += 1
-        
-        if cnt >= update_freq:
-            cnt = 0
+            density = len(positions) / (grid_width * grid_height)
+            densities.append(density)
             positions = adjust_grid(positions)
-
-        density = len(positions) / (grid_width * grid_height)
-        densities.append(density)
 
         pygame.display.set_caption("Simulation started" if playSim else "Paused")
 
@@ -123,7 +129,7 @@ def main():
         pygame.display.update()
 
     plt.plot(densities)
-    plt.xlabel('Steps of time')
+    plt.xlabel('Iterations')
     plt.ylabel('Density of live cells')
     plt.title(f'Behavior in p0 = {p0}')
     plt.show()
