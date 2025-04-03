@@ -18,13 +18,22 @@ def zipf(txt):
     sortedDict = sorted(wordDict.items(), key=lambda x: x[1], reverse=True)
     k,v = zip(*sortedDict)
     plt.figure(figsize=(10, 6))
-    plt.plot(range(1, len(v) + 1), v, color='b')
+    plt.plot(range(1, len(v) + 1), v, "o", markersize="2.5", color='b')
     plt.title("Zipf's Law distibution of words")
-    plt.xlabel("Frequency")
-    plt.ylabel("Rank")
+    plt.xlabel("Rank")
+    plt.ylabel("Frequency")
     plt.yscale('log')
     plt.xscale('log')
     plt.show()
 
 if __name__ == "__main__":
     zipf("test_file.txt")
+
+    # jeden z przypadkow, kiedy kazde slowo wystepuje raz
+    # zipf("zad2_1.txt")
+
+    # drugi z przypadkow, jedno slowo wystepuje wielokrotnie
+    # zipf("zad2_2.txt")
+
+    # trzeci z przypadkow, zachodzi chaos, przez co krzywa zipfa jej nie przypomina 
+    # zipf("zad2_3.txt")
