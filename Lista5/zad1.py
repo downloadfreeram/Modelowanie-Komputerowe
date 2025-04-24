@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import numpy as np
 
 class ThreeBody:
@@ -8,71 +9,71 @@ class ThreeBody:
         self.m = m
         self.G = 1
 
-    def dist(self, x1,y1,x2,y2):
-        return np.sqrt((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2))
-    
-    def simulate(self):
-        fx = []
-        fy = []
-        x = [0.5 - 0.2, 0.5 + 0.2, 0.5]
-        y = [0.5 - 0.2, 0.5 - 0.2, 0.5 + 0.2 ]
-        vx = [0.93240737/2.0, 0.93240737 / 2.0, -0.93240737]
-        vy = [0.86473146/2.0, 0.86473146 / 2.0, -0.86473146]
-        xp1 = []
-        yp1 = []
-        xm1 = []
-        ym1 = [] 
+        self.x = [0.5 - 0.2, 0.5 + 0.2, 0.5]
+        self.y = [0.5 - 0.2, 0.5 - 0.2, 0.5 + 0.2 ]
+        self.vx = [0.93240737/2.0, 0.93240737 / 2.0, -0.93240737]
+        self.vy = [0.86473146/2.0, 0.86473146 / 2.0, -0.86473146]
 
-        step = 0
+        self.prev_x = self.x.copy()
+        self.prev_y = self.y.copy()
 
-        while(step < 100):
-            step = step + 1
-            for i in range(self.N):
-                for j in range(i+1,self.N):
-                    d = self.dist(x[i], y[i], x[j], y[j])
+    def dist(self, x1, y1, x2, y2):
+        return np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
-                    if(d != 0):
-                        rx = x[i] - x[j]
-                        ry = y[i] - y[j]
-                        rx = rx / d
-                        ry = ry / d
-                        Fx = rx * self.G * self.m*self.m / (d*d) 
-                        Fy = ry * self.G * self.m*self.m / (d*d)
+    def simulate_step(self):
+        fx = [0.0] * self.N
+        fy = [0.0] * self.N
 
-                        fx.insert(i, 0-Fx)
-                        fy.insert(i, 0-Fy)
-                        
-                        fx.insert(j, 0+Fx)
-                        fy.insert(j, 0+Fy)
+        for i in range(self.N):
+            for j in range(i+1, self.N):
+                d = self.dist(self.x[i], self.y[i], self.x[j], self.y[j])
+                if d != 0:
+                    rx = self.x[i] - self.x[j]
+                    ry = self.y[i] - self.y[j]
+                    rx /= d
+                    ry /= d
+                    F = self.G * self.m * self.m / (d * d)
+                    Fx = rx * F
+                    Fy = ry * F
+                    fx[i] -= Fx
+                    fy[i] -= Fy
+                    fx[j] += Fx
+                    fy[j] += Fy
 
-            if(step == 1):
-                for b in range(self.N):
+        new_x = [0.0] * self.N
+        new_y = [0.0] * self.N
+        for i in range(self.N):
+            new_x[i] = 2 * self.x[i] - self.prev_x[i] + self.dt**2 * fx[i] / self.m
+            new_y[i] = 2 * self.y[i] - self.prev_y[i] + self.dt**2 * fy[i] / self.m
 
-                    vx.insert(b, vx[b] + fx[b] / self.m * self.dt)
-                    vy.insert(b, vy[b] + fy[b] / self.m * self.dt)
-                    xp1.insert(b, x[b] + vx[b] * self.dt)
-                    yp1.insert(b, x[b] + vy[b] * self.dt )
-            else:
-                #Verlet calculations
-                for b in range(self.N):
+            self.vx[i] = (new_x[i] - self.prev_x[i]) / (2 * self.dt)
+            self.vy[i] = (new_y[i] - self.prev_y[i]) / (2 * self.dt)
 
-                    xp1.insert(b, 2 * x[b] - xm1[b] + self.dt * self.dt * fx[b]/ self.m)
-                    yp1.insert(b, 2 * y[b] - ym1[b] + self.dt * self.dt * fy[b]/ self.m)
-            
-            for b in range(self.N):
-                xm1.insert(b, x[b])
-                ym1.insert(b, y[b])
+        self.prev_x = self.x.copy()
+        self.prev_y = self.y.copy()
+        self.x = new_x
+        self.y = new_y
 
-                x[b] = xp1[b]
-                y[b] = yp1[b]
+        return self.x, self.y
 
-                vx[b] = (x[b] - xm1[b]) / (2 * self.dt)
-                vy[b] = (y[b] - ym1[b]) / (2 * self.dt)
+    def animate(self, frames=200):
+        fig, ax = plt.subplots()
+        ax.set_xlim(-4, 4)
+        ax.set_ylim(-4, 4)
+        scat = ax.scatter(self.x, self.y)
+
+        def update(frame):
+            x, y = self.simulate_step()
+            scat.set_offsets(np.c_[x, y])
+            return scat,
+
+        ani = animation.FuncAnimation(fig, update, frames=frames, interval=30, blit=True)
+        plt.show()
+
 
 def main():
     test = ThreeBody(3, 0.0015, 1)
-
-    print(test.simulate())
+    test.animate()
 
 if __name__ == "__main__":
     main()
