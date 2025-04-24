@@ -8,7 +8,7 @@ class ThreeBody:
         self.dt = dt
         self.m = m
         self.G = 1
-        self.variable = 0.1 # for changing initial values by variable valuy
+        self.variable = 0.1
         self.step = 0
 
         self.x_data = [[] for _ in range(self.N)]
@@ -22,10 +22,11 @@ class ThreeBody:
     def simulate(self, steps):
         fx = []
         fy = []
-        x = [0.5 - 0.2, 0.5 + 0.2, 0.5]
-        y = [0.5 - 0.2 - self.variable, 0.5 - 0.2, 0.5 + 0.2]
-        vx = [0.93240737 / 2.0, 0.93240737 / 2.0, -0.93240737]
-        vy = [0.86473146 / 2.0, 0.86473146 / 2.0, -0.86473146]
+        # initial values for drawing an infinite symbol based on "A remarkable periodic solution of three body problem in the case of equal masses" Annals of Mathematics (2000)
+        x = [0.97000436, -0.97000436, 0.0]
+        y = [-0.24308753, 0.24308753, 0.0]
+        vx  = [0.466203685, 0.466203685, -0.93240737]
+        vy = [0.432365730, 0.432365730, -0.86473146]
         xp1 = [0] * self.N
         yp1 = [0] * self.N
         xm1 = [0] * self.N
@@ -59,7 +60,6 @@ class ThreeBody:
                     xm1[b] = x[b]
                     ym1[b] = y[b]
             else:
-                # Verlet method
                 for b in range(self.N):
                     xp1[b] = 2 * x[b] - xm1[b] + self.dt * self.dt * fx[b] / self.m
                     yp1[b] = 2 * y[b] - ym1[b] + self.dt * self.dt * fy[b] / self.m
@@ -86,7 +86,7 @@ def avg_distance(x, y):
     d1 = np.sqrt((x[0] - x[1])**2 + (y[0] - y[1])**2)
     d2 = np.sqrt((x[0] - x[2])**2 + (y[0] - y[2])**2)
     d3 = np.sqrt((x[1] - x[2])**2 + (y[1] - y[2])**2)
-    return (d1 + d2 + d3) / 3
+    return (d1 + d2 + d3) / 3.0
 
 def animate(x_data, y_data):
     fig, ax = plt.subplots()
@@ -96,17 +96,20 @@ def animate(x_data, y_data):
     ax.grid(True)
 
     points = [ax.plot([], [], 'o')[0] for _ in range(len(x_data))]
+    trails = [ax.plot([], [], '-',linewidth = 0.7)[0] for _ in range(len(x_data))]
 
     def init():
-        for point in points:
+        for point, trail in zip(points,trails):
             point.set_data([], [])
-        return points
+            trail.set_data([], [])
+        return points + trails
 
     def update(frame):
         for i in range(len(x_data)):
             if frame < len(x_data[i]):
                 points[i].set_data([x_data[i][frame]], [y_data[i][frame]])
-        return points
+                trails[i].set_data(x_data[i][:frame+1], y_data[i][:frame+1])
+        return points + trails
 
     ani = animation.FuncAnimation(fig, update, frames=len(x_data[0]), init_func=init, interval = 30)
     plt.show()
@@ -126,7 +129,7 @@ def plot_avg_distance(avg_distances):
 
 def main():
     test = ThreeBody(3, 0.0015, 1)
-    x_data, y_data, avg_distance = test.simulate(steps=1000)
+    x_data, y_data, avg_distance = test.simulate(steps=3000)
     animate(x_data, y_data)
     plot_avg_distance(avg_distance)
 
